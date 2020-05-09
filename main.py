@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import math
 import sys
 
 import numpy as np
@@ -23,15 +24,11 @@ chars = np.array([' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 
 class ParserArguments:
     def __init__(self):
-        self.parser = argparse.ArgumentParser(add_help=True,
-                                              description="Image to ASCII")
-        self.parser.add_argument('-i', '--input', dest='input_file',
-                                 required=True)
-        self.parser.add_argument('-o', '--output', dest='output_file',
-                                 required=True)
+        self.parser = argparse.ArgumentParser(add_help=True, description="Image to ASCII")
+        self.parser.add_argument('-i', '--input', dest='input_file', required=True)
+        self.parser.add_argument('-o', '--output', dest='output_file', required=True)
         self.parser.add_argument('-x', '--width', dest='width', required=False)
-        self.parser.add_argument('-y', '--height', dest='height',
-                                 required=False)
+        self.parser.add_argument('-y', '--height', dest='height', required=False)
 
     def parse(self):
         args = self.parser.parse_args()
@@ -55,9 +52,9 @@ class CharDictionary:
         self.font = ImageFont.truetype("fonts\\OpenSans-SemiBold.ttf", 16)
 
     def get_char_img(self, char):
-        char_img = Image.new('RGB', (50, 50), (255, 255, 255))
+        char_img = Image.new('L', (int(cell_width), int(cell_height)), 255)
         drawer = ImageDraw.Draw(char_img)
-        drawer.text((0, 0), char, font=self.font, fill=(0, 0, 0))
+        drawer.text((0, 0), char, font=self.font, fill=0)
         char_img = char_img.convert('1')
         return char_img
 
@@ -67,8 +64,8 @@ class CharDictionary:
             self.char_dict[char] = char_img
 
 
-cell_width = 9.1
-cell_height = 19
+cell_width = 8
+cell_height = 11
 
 
 class ImageConverter:
@@ -89,7 +86,7 @@ class ImageConverter:
             new_height = arg_height
 
         elif arg_width is None and arg_height is None:
-            new_width = 120
+            new_width = 1200
             new_height = ratio * new_width
 
         elif arg_width is not None and arg_height is None:
@@ -102,10 +99,10 @@ class ImageConverter:
 
         return img.resize((int(new_width), int(new_height)))
 
-    def get_size_in_blocks(self, img):
-        resized_img = self,(self.arg_width, self.arg_height)
-        count_block_w = int(resized_img.size[0] / cell_width)
-        count_block_h = int(resized_img.size[1] / cell_height)
+    @staticmethod
+    def get_size_in_blocks(img):
+        count_block_w = math.floor(img.size[0] / cell_width)
+        count_block_h = math.floor(img.size[1] / cell_height)
 
         return count_block_w, count_block_h
 
@@ -119,9 +116,9 @@ class ImageConverter:
             img_arr.reshape(width * height, 3)
             out = np.matmul(img_arr, gs_factors)
         except ValueError:
-            return img_arr
+            return Image.fromarray(img_arr)
 
-        return out.reshape(width, height)
+        return Image.fromarray(out.reshape(width, height))
 
     @staticmethod
     def change_contrast(img, level):
@@ -132,30 +129,15 @@ class ImageConverter:
 
         return img.point(contrast)
 
-    @staticmethod
-    def to_ascii_chars(img, new_width):
-        pixels = np.array(img)
-        new_pixels = []
-
-        for pixel_col in pixels:
-            for pixel in pixel_col:
-                new_pixels.append(chars[int(pixel) // 3])
-        new_pixels = "".join(new_pixels)
-
-        ascii_img = [new_pixels[i:i + new_width]
-                     for i in range(0, len(new_pixels), new_width)]
-        ascii_img = "\n".join(ascii_img)
-
-        return ascii_img
-
-    # def to_ascii_chars(self, img, new_width):
-    #     block_width, block_height = self.get_size_in_blocks(img)
-    #     # pixels = np.array(img)
+    # @staticmethod
+    # def to_ascii_chars(img, new_width):
+    #     pixels = np.array(img)
     #     new_pixels = []
-    #     for x in range(block_width):
-    #         for y in range(block_height):
-    #             new_pixels.append(self.get_most_suitable_char(x, y))
-    #     new_pixels = ''.join(new_pixels)
+    #
+    #     for pixel_col in pixels:
+    #         for pixel in pixel_col:
+    #             new_pixels.append(chars[int(pixel) // 3])
+    #     new_pixels = "".join(new_pixels)
     #
     #     ascii_img = [new_pixels[i:i + new_width]
     #                  for i in range(0, len(new_pixels), new_width)]
@@ -163,16 +145,34 @@ class ImageConverter:
     #
     #     return ascii_img
 
-    def get_most_suitable_char(self, x, y):
-        char_dict = CharDictionary().char_dict
+    def to_ascii_chars(self, img):
+        block_width, block_height = self.get_size_in_blocks(img)
+        pixels = np.array(img)
+        new_pixels = []
+        for y in range(block_height):
+            for x in range(block_width):
+                new_pixels.append(self.get_most_suitable_char(img, x, y))
+        new_pixels = ''.join(new_pixels)
+
+        ascii_img = [new_pixels[i:i + block_width]
+                     for i in range(0, len(new_pixels), block_width)]
+        ascii_img = "\n".join(ascii_img)
+
+        return ascii_img
+
+    @staticmethod
+    def get_most_suitable_char(img, x, y):
+        dict_creator = CharDictionary()
+        dict_creator.get_char_dict()
+        char_dict = dict_creator.char_dict
         min_diff = sys.maxsize
-        most_suitable_char = ' '
+        most_suitable_char = " "
         xx = x * cell_width
         yy = y * cell_height
-        block = self.img.crop((xx, yy, xx + cell_width, yy + cell_height))
+        block = img.crop((xx, yy, xx + cell_width, yy + cell_height))
 
         for char in char_dict:
-            difference = ImageChops.difference(char, block)
+            difference = ImageChops.difference(block, char_dict[char])
             statistic = ImageStat.Stat(difference)
             diff = statistic.sum[0]
             if diff < min_diff:
@@ -184,9 +184,9 @@ class ImageConverter:
 
     def convert(self):
         resize_img = self.resize(self.img, self.arg_width, self.arg_height)
-        contrast_img = self.change_contrast(resize_img, 150)
-        gs_img = self.to_gray_scale(contrast_img)
-        out_ascii = self.to_ascii_chars(gs_img, gs_img.shape[1])
+        # contrast_img = self.change_contrast(resize_img, 100)
+        gs_img = resize_img.convert('L')
+        out_ascii = self.to_ascii_chars(gs_img)
 
         with open(self.out_file, 'w') as file:
             file.write(out_ascii)
