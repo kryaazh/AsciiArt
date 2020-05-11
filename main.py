@@ -3,13 +3,9 @@
 import argparse
 import math
 import sys
-
+import os
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw, ImageChops, ImageStat
-
-# chars = np.array(["B", "S", "#", "&",
-#                   "$", "@", "%", "*",
-#                   "!", ":", ".", " "])
 
 chars = np.array([' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                   'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
@@ -21,14 +17,18 @@ chars = np.array([' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                   ':', ';', '?', '@', '\\', '^', '_', '`', '{', '|', '}',
                   '~', '<', '=', '>'])
 
+block_width = 13
+block_height = 26
+
 
 class ParserArguments:
     def __init__(self):
         self.parser = argparse.ArgumentParser(add_help=True, description="Image to ASCII")
         self.parser.add_argument('-i', '--input', dest='input_file', required=True)
         self.parser.add_argument('-o', '--output', dest='output_file', required=True)
-        self.parser.add_argument('-x', '--width', dest='width', required=False)
-        self.parser.add_argument('-y', '--height', dest='height', required=False)
+        self.parser.add_argument('-b', '--background', dest="background_color", required=False, default="white")
+        self.parser.add_argument('-x', '--width', dest='width', required=False, default=1000)
+        self.parser.add_argument('-y', '--height', dest='height', required=False, default=1000)
 
     def parse(self):
         args = self.parser.parse_args()
@@ -43,38 +43,65 @@ class ParserArguments:
         if args.height is not None:
             height = int(args.height)
 
-        return input_file, output_file, width, height
+        background_color = args.background_color
+
+        return input_file, output_file, width, height, background_color
 
 
 class CharDictionary:
     def __init__(self):
         self.char_dict = {}
-        self.font = ImageFont.truetype("fonts\\OpenSans-SemiBold.ttf", 16)
+        self.font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 20)
+        self.counter = 0
 
     def get_char_img(self, char):
-        char_img = Image.new('L', (int(cell_width), int(cell_height)), 255)
+        char_img = Image.new('L', (int(block_width), int(block_height)), 255)
         drawer = ImageDraw.Draw(char_img)
         drawer.text((0, 0), char, font=self.font, fill=0)
-        char_img = char_img.convert('1')
+
+        char_img.save(f'''char_dict\\{self.counter}.jpg''')
         return char_img
 
     def get_char_dict(self):
-        for char in chars:
-            char_img = self.get_char_img(char)
-            self.char_dict[char] = char_img
+        files = os.listdir("char_dict")
+
+        if not files:
+            self.counter = 0
+            for char in chars:
+                char_img = self.get_char_img(char)
+                self.char_dict[char] = char_img
+                self.counter += 1
+        else:
+            self.counter = 0
+            for char in chars:
+                char_img = Image.open(f'''char_dict\\{self.counter}.jpg''')
+                self.char_dict[char] = char_img
+                self.counter += 1
 
 
-cell_width = 8
-cell_height = 11
+def to_gray_scale(img):
+    img_arr = np.array(img)
+    gs_factors = np.array([0.2989, 0.587, 0.114])
+
+    width, height = img_arr.shape[0], img_arr.shape[1]
+    try:
+        img_arr.reshape(width * height, 3)
+        out = np.matmul(img_arr, gs_factors)
+    except ValueError:
+        return Image.fromarray(img_arr)
+
+    return Image.fromarray(out.reshape(width, height))
 
 
 class ImageConverter:
-    def __init__(self, img_file, out_file, arg_width, arg_height):
+    def __init__(self, img_file, out_file, arg_width, arg_height, arg_background_color, arg_contrast_level):
         self.img = Image.open(img_file)
         self.out_file = out_file
         self.width, self.height = self.img.size
         self.arg_width = arg_width
         self.arg_height = arg_height
+        self.background_color = arg_background_color
+        self.contrast_level = arg_contrast_level
 
     def resize(self, img, arg_width, arg_height):
         new_width = 0
@@ -101,24 +128,10 @@ class ImageConverter:
 
     @staticmethod
     def get_size_in_blocks(img):
-        count_block_w = math.floor(img.size[0] / cell_width)
-        count_block_h = math.floor(img.size[1] / cell_height)
+        count_block_w = math.floor(img.size[0] / block_width)
+        count_block_h = math.floor(img.size[1] / block_height)
 
         return count_block_w, count_block_h
-
-    @staticmethod
-    def to_gray_scale(img):
-        img_arr = np.array(img)
-        gs_factors = np.array([0.2989, 0.587, 0.114])
-
-        width, height = img_arr.shape[0], img_arr.shape[1]
-        try:
-            img_arr.reshape(width * height, 3)
-            out = np.matmul(img_arr, gs_factors)
-        except ValueError:
-            return Image.fromarray(img_arr)
-
-        return Image.fromarray(out.reshape(width, height))
 
     @staticmethod
     def change_contrast(img, level):
@@ -129,33 +142,16 @@ class ImageConverter:
 
         return img.point(contrast)
 
-    # @staticmethod
-    # def to_ascii_chars(img, new_width):
-    #     pixels = np.array(img)
-    #     new_pixels = []
-    #
-    #     for pixel_col in pixels:
-    #         for pixel in pixel_col:
-    #             new_pixels.append(chars[int(pixel) // 3])
-    #     new_pixels = "".join(new_pixels)
-    #
-    #     ascii_img = [new_pixels[i:i + new_width]
-    #                  for i in range(0, len(new_pixels), new_width)]
-    #     ascii_img = "\n".join(ascii_img)
-    #
-    #     return ascii_img
-
     def to_ascii_chars(self, img):
-        block_width, block_height = self.get_size_in_blocks(img)
-        pixels = np.array(img)
+        count_block_w, count_block_h = self.get_size_in_blocks(img)
         new_pixels = []
-        for y in range(block_height):
-            for x in range(block_width):
+        for y in range(count_block_h):
+            for x in range(count_block_w):
                 new_pixels.append(self.get_most_suitable_char(img, x, y))
         new_pixels = ''.join(new_pixels)
 
-        ascii_img = [new_pixels[i:i + block_width]
-                     for i in range(0, len(new_pixels), block_width)]
+        ascii_img = [new_pixels[i:i + count_block_w]
+                     for i in range(0, len(new_pixels), count_block_w)]
         ascii_img = "\n".join(ascii_img)
 
         return ascii_img
@@ -167,9 +163,9 @@ class ImageConverter:
         char_dict = dict_creator.char_dict
         min_diff = sys.maxsize
         most_suitable_char = " "
-        xx = x * cell_width
-        yy = y * cell_height
-        block = img.crop((xx, yy, xx + cell_width, yy + cell_height))
+        next_x = x * block_width
+        next_y = y * block_height
+        block = img.crop((next_x, next_y, next_x + block_width, next_y + block_height))
 
         for char in char_dict:
             difference = ImageChops.difference(block, char_dict[char])
@@ -178,17 +174,31 @@ class ImageConverter:
             if diff < min_diff:
                 min_diff = diff
                 most_suitable_char = char
-                if diff == 0:
-                    return most_suitable_char
         return most_suitable_char
 
     def convert(self):
+        if self.background_color == "white":
+            bg_color_code = 255
+        else:
+            bg_color_code = 0
+
+        font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 20)
         resize_img = self.resize(self.img, self.arg_width, self.arg_height)
-        # contrast_img = self.change_contrast(resize_img, 100)
-        gs_img = resize_img.convert('L')
+        contrast_img = self.change_contrast(resize_img, 150)
+        gs_img = contrast_img.convert('L')
         out_ascii = self.to_ascii_chars(gs_img)
 
-        with open(self.out_file, 'w') as file:
+        blocks_count_w, blocks_count_h = self.get_size_in_blocks(gs_img)
+        out_width = block_width * blocks_count_w
+        out_height = block_height * blocks_count_h
+
+        out_image = Image.new('L', (out_width, out_height), bg_color_code)
+        draw = ImageDraw.Draw(out_image)
+        draw.text((0, 0), out_ascii, fill=255-bg_color_code, font=font)
+
+        out_image.save(self.out_file)
+
+        with open("last_ascii.txt", 'w') as file:
             file.write(out_ascii)
 
 
@@ -200,19 +210,19 @@ class VerifierArguments:
         self.height = height
 
     @staticmethod
-    def verify_img(img_file):
+    def verify_img(img):
         try:
-            Image.open(img_file)
+            Image.open(img)
         except OSError:
             print('Входной файл не является изображением')
 
 
 class ImageToAscii:
     parser = ParserArguments()
-    img_file, out_file, width, height = parser.parse()
+    img_file, out_file, width, height, background_color = parser.parse()
     verifier = VerifierArguments(img_file, out_file, width, height)
     verifier.verify_img(img_file)
-    converter = ImageConverter(img_file, out_file, width, height)
+    converter = ImageConverter(img_file, out_file, width, height, background_color)
     converter.convert()
 
 
