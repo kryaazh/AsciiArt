@@ -29,6 +29,7 @@ class ParserArguments:
         self.parser.add_argument('-b', '--background', dest="background_color", required=False, default="white")
         self.parser.add_argument('-x', '--width', dest='width', required=False, default=1000)
         self.parser.add_argument('-y', '--height', dest='height', required=False, default=1000)
+        self.parser.add_argument('-c', '--contrast', dest='contrast', required=False, default=100)
 
     def parse(self):
         args = self.parser.parse_args()
@@ -45,7 +46,7 @@ class ParserArguments:
 
         background_color = args.background_color
 
-        return input_file, output_file, width, height, background_color
+        return input_file, output_file, width, height, background_color, int(args.contrast)
 
 
 class CharDictionary:
@@ -55,7 +56,8 @@ class CharDictionary:
         self.counter = 0
 
     def get_char_img(self, char):
-        char_img = Image.new('L', (int(block_width), int(block_height)), 255)
+        char_width, char_height = self.font.getsize("|")
+        char_img = Image.new('L', (char_width, char_height), 255)
         drawer = ImageDraw.Draw(char_img)
         drawer.text((0, 0), char, font=self.font, fill=0)
 
@@ -94,14 +96,14 @@ def to_gray_scale(img):
 
 
 class ImageConverter:
-    def __init__(self, img_file, out_file, arg_width, arg_height, arg_background_color, arg_contrast_level):
+    def __init__(self, img_file, out_file, arg_width, arg_height, arg_background_color, arg_contrast):
         self.img = Image.open(img_file)
         self.out_file = out_file
         self.width, self.height = self.img.size
         self.arg_width = arg_width
         self.arg_height = arg_height
         self.background_color = arg_background_color
-        self.contrast_level = arg_contrast_level
+        self.contrast = arg_contrast
 
     def resize(self, img, arg_width, arg_height):
         new_width = 0
@@ -128,8 +130,8 @@ class ImageConverter:
 
     @staticmethod
     def get_size_in_blocks(img):
-        count_block_w = math.floor(img.size[0] / block_width)
-        count_block_h = math.floor(img.size[1] / block_height)
+        count_block_w = int(img.size[0] / block_width)
+        count_block_h = int(img.size[1] / block_height)
 
         return count_block_w, count_block_h
 
@@ -138,7 +140,8 @@ class ImageConverter:
         factor = (259 * (level + 255)) / (255 * (259 - level))
 
         def contrast(c):
-            return 128 + factor * (c - 128)
+            value = 128 + factor * (c - 128)
+            return max(0, min(255, value))
 
         return img.point(contrast)
 
@@ -174,6 +177,8 @@ class ImageConverter:
             if diff < min_diff:
                 min_diff = diff
                 most_suitable_char = char
+                if abs(diff) < 1e-9:
+                    return most_suitable_char
         return most_suitable_char
 
     def convert(self):
@@ -184,8 +189,9 @@ class ImageConverter:
 
         font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 20)
         resize_img = self.resize(self.img, self.arg_width, self.arg_height)
-        contrast_img = self.change_contrast(resize_img, 150)
+        contrast_img = self.change_contrast(resize_img, self.contrast)
         gs_img = contrast_img.convert('L')
+        gs_img.save("gs.jpg")
         out_ascii = self.to_ascii_chars(gs_img)
 
         blocks_count_w, blocks_count_h = self.get_size_in_blocks(gs_img)
@@ -194,10 +200,9 @@ class ImageConverter:
 
         out_image = Image.new('L', (out_width, out_height), bg_color_code)
         draw = ImageDraw.Draw(out_image)
-        draw.text((0, 0), out_ascii, fill=255-bg_color_code, font=font)
+        draw.text((15, 15), out_ascii, fill=255 - bg_color_code, font=font)
 
         out_image.save(self.out_file)
-
         with open("last_ascii.txt", 'w') as file:
             file.write(out_ascii)
 
@@ -214,15 +219,20 @@ class VerifierArguments:
         try:
             Image.open(img)
         except OSError:
-            print('Входной файл не является изображением')
+            print(f'{img} не является изображением')
+
+    def verify(self):
+        self.verify_img(self.img_file)
 
 
 class ImageToAscii:
     parser = ParserArguments()
-    img_file, out_file, width, height, background_color = parser.parse()
+    img_file, out_file, width, height, background_color, contrast = parser.parse()
+
     verifier = VerifierArguments(img_file, out_file, width, height)
-    verifier.verify_img(img_file)
-    converter = ImageConverter(img_file, out_file, width, height, background_color)
+    verifier.verify()
+
+    converter = ImageConverter(img_file, out_file, width, height, background_color, contrast)
     converter.convert()
 
 
