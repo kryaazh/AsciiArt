@@ -2,9 +2,10 @@
 
 from PIL import Image, ImageDraw, ImageChops, ImageStat
 from asciiart import ImageConverter, VerifierArguments
+import unittest
 
 
-class TestConverter:
+class TestConverter(unittest.TestCase):
     def test_resize(self):
         converter = ImageConverter(img_file='img_for_test/jer.jpg',
                                    out_file='img_for_test/jer_r.jpg',
@@ -17,17 +18,17 @@ class TestConverter:
         resized_image = converter.resize(img, 100, 100)
         new_width, new_height = resized_image.size
 
-        assert (100, 100) == (new_width, new_height)
+        self.assertEqual((100, 100), (new_width, new_height))
 
     def test_get_size_in_blocks(self):
         img = Image.new('L', (26, 26))
 
-        assert ImageConverter.get_size_in_blocks(img) == (2, 1)
+        self.assertEqual(ImageConverter.get_size_in_blocks(img), (2, 1))
 
     def test_get_most_suitable_char(self):
         img = Image.open("img_for_test/black.jpg")
 
-        assert ImageConverter.get_most_suitable_char(img, 1, 1) == "W"
+        self.assertEqual(ImageConverter.get_most_suitable_char(img, 1, 1), "W")
 
     def test_to_ascii_char(self):
         converter = ImageConverter(img_file='img_for_test/black.jpg',
@@ -50,10 +51,10 @@ class TestConverter:
         statistic = ImageStat.Stat(difference)
         diff = statistic.sum[0]
 
-        assert diff == 0
+        self.assertEqual(diff, 0)
 
 
-class TestVerify:
+class TestVerify(unittest.TestCase):
     def test_true_verify(self):
         verifier = VerifierArguments(img_file='img_for_test/jer.jpg',
                                      out_file='img_for_test/jer_r.jpg')
@@ -62,7 +63,7 @@ class TestVerify:
         else:
             ver = False
 
-        assert ver
+        self.assertEqual(ver, True)
 
     def test_false_verify(self):
         verifier = VerifierArguments(img_file='img_for_test/jer.txt',
@@ -73,5 +74,8 @@ class TestVerify:
         else:
             ver = False
 
-        assert not ver
+        self.assertEqual(ver, False)
 
+
+if __name__ == "__main__":
+    unittest.main()
