@@ -15,8 +15,8 @@ chars = np.array([' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                   '$', '%', '&', '(', ')', '*', '+', ',', '-', '.', '/',
                   ':', ';', '?', '@', '\\', '^', '_', '`', '{', '|', '}',
                   '~', '<', '=', '>'])
-block_width = 13
-block_height = 26
+block_width = 8
+block_height = 18
 
 
 class ParserArguments:
@@ -27,13 +27,12 @@ class ParserArguments:
                                  dest='input_file', required=True)
         self.parser.add_argument('-o', '--output',
                                  dest='output_file', required=True)
-        self.parser.add_argument('-b', '--background',
-                                 dest="background_color",
-                                 required=False, default="white")
         self.parser.add_argument('-x', '--width',
                                  dest='width', required=False, default=1000)
         self.parser.add_argument('-y', '--height',
                                  dest='height', required=False, default=1000)
+        self.parser.add_argument('--inverted', dest="inverted", required=False,
+                                 action='store_true')
         self.parser.add_argument('-c', '--contrast',
                                  dest='contrast', required=False, default=100)
 
@@ -49,18 +48,16 @@ class ParserArguments:
         height = None
         if args.height is not None:
             height = int(args.height)
-
-        background_color = args.background_color
         contrast = int(args.contrast)
+        inverted = args.inverted
 
-        return\
-            input_file, output_file, width, height, background_color, contrast
+        return input_file, output_file, width, height, inverted, contrast
 
 
 class CharDictionary:
     def __init__(self):
         self.char_dict = {}
-        self.font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 20)
+        self.font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 14)
         self.counter = 0
 
     def get_char_img(self, char):
@@ -104,14 +101,14 @@ def to_gray_scale(img):
 
 
 class ImageConverter:
-    def __init__(self, img_file, out_file, arg_width, arg_height,
-                 arg_background_color, arg_contrast):
+    def __init__(self, img_file, out_file,
+                 arg_width, arg_height, arg_inverted, arg_contrast):
         self.img = Image.open(img_file)
         self.out_file = out_file
         self.width, self.height = self.img.size
         self.arg_width = arg_width
         self.arg_height = arg_height
-        self.background_color = arg_background_color
+        self.inverted = arg_inverted
         self.contrast = arg_contrast
 
     def resize(self, img, arg_width, arg_height):
@@ -192,27 +189,16 @@ class ImageConverter:
         return most_suitable_char
 
     def convert(self):
-        if self.background_color == "white":
-            bg_color_code = 255
-        else:
-            bg_color_code = 0
-
-        font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 20)
         resize_img = self.resize(self.img, self.arg_width, self.arg_height)
         contrast_img = self.change_contrast(resize_img, self.contrast)
         gs_img = contrast_img.convert('L')
+
+        if self.inverted:
+            gs_img = ImageChops.invert(gs_img)
+        gs_img.save("gs_img.jpg")
         out_ascii = self.to_ascii_chars(gs_img)
 
-        blocks_count_w, blocks_count_h = self.get_size_in_blocks(gs_img)
-        out_width = block_width * blocks_count_w
-        out_height = block_height * blocks_count_h
-
-        out_image = Image.new('L', (out_width, out_height), bg_color_code)
-        draw = ImageDraw.Draw(out_image)
-        draw.text((0, 0), out_ascii, fill=255 - bg_color_code, font=font)
-
-        out_image.save(self.out_file)
-        with open("last_ascii.txt", 'w') as file:
+        with open(self.out_file, 'w') as file:
             file.write(out_ascii)
 
 
@@ -236,20 +222,18 @@ class VerifierArguments:
 
 def get_result_image():
     parser = ParserArguments()
-    img_file, out_file, width, height, background_color, contrast \
-        = parser.parse()
+    img_file, out_file, width, height, inverted, contrast = parser.parse()
 
     verifier = VerifierArguments(img_file, out_file)
     verifier.verify()
 
-    converter = ImageConverter(img_file, out_file, width, height,
-                               background_color, contrast)
+    converter = ImageConverter(img_file, out_file, width,
+                               height, inverted, contrast)
     converter.convert()
 
 
 def main():
     get_result_image()
-
 
 if __name__ == '__main__':
     main()
