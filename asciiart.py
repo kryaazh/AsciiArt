@@ -32,10 +32,10 @@ class ParserArguments:
                                  dest='width', required=False, default=1000)
         self.parser.add_argument('-y', '--height',
                                  dest='height', required=False, default=1000)
-        self.parser.add_argument('--inverted', dest="inverted", required=False,
-                                 action='store_true')
-        self.parser.add_argument('-c', '--contrast',
-                                 dest='contrast', required=False, default=100)
+        self.parser.add_argument('--inverted', dest="inverted",
+                                 required=False, action='store_true')
+        self.parser.add_argument('-c', '--contrast', dest='contrast',
+                                 required=False, default=100)
 
     def parse(self):
         args = self.parser.parse_args()
