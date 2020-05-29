@@ -4,7 +4,8 @@ import argparse
 import sys
 import os
 import numpy as np
-from PIL import Image, ImageFont, ImageDraw, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageStat, ImageFont, ImageDraw
+import CharDictionary
 
 chars = np.array([' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                   'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
@@ -52,38 +53,6 @@ class ParserArguments:
         inverted = args.inverted
 
         return input_file, output_file, width, height, inverted, contrast
-
-
-class CharDictionary:
-    def __init__(self):
-        self.char_dict = {}
-        self.font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 14)
-        self.counter = 0
-
-    def get_char_img(self, char):
-        char_width, char_height = self.font.getsize("|")
-        char_img = Image.new('L', (char_width, char_height), 255)
-        drawer = ImageDraw.Draw(char_img)
-        drawer.text((0, 0), char, font=self.font, fill=0)
-
-        char_img.save(f'''chars\\{self.counter}.jpg''')
-        return char_img
-
-    def get_char_dict(self):
-        files = os.listdir("chars")
-
-        if not files:
-            self.counter = 0
-            for char in chars:
-                char_img = self.get_char_img(char)
-                self.char_dict[char] = char_img
-                self.counter += 1
-        else:
-            self.counter = 0
-            for char in chars:
-                char_img = Image.open(f'''chars\\{self.counter}.jpg''')
-                self.char_dict[char] = char_img
-                self.counter += 1
 
 
 def to_gray_scale(img):
@@ -167,7 +136,7 @@ class ImageConverter:
 
     @staticmethod
     def get_most_suitable_char(img, x, y):
-        dict_creator = CharDictionary()
+        dict_creator = CharDictionary.CharDictionary()
         dict_creator.get_char_dict()
         char_dict = dict_creator.char_dict
         min_diff = sys.maxsize
@@ -234,6 +203,7 @@ def get_result_image():
 
 def main():
     get_result_image()
+
 
 if __name__ == '__main__':
     main()
