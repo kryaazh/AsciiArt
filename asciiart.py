@@ -1,83 +1,38 @@
 #!/usr/bin/env python
-
-import argparse
 import sys
-import os
 import numpy as np
-from PIL import Image, ImageChops, ImageStat, ImageFont, ImageDraw
-import CharDictionary
+from PIL import Image, ImageChops
+import ParserArguments as parse
 
-chars = np.array([' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
-                  'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-                  'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-                  'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
-                  'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '!', '"', '#',
-                  '$', '%', '&', '(', ')', '*', '+', ',', '-', '.', '/',
-                  ':', ';', '?', '@', '\\', '^', '_', '`', '{', '|', '}',
-                  '~', '<', '=', '>'])
-block_width = 8
-block_height = 18
-
-
-class ParserArguments:
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(add_help=True,
-                                              description="Image to ASCII")
-        self.parser.add_argument('-i', '--input',
-                                 dest='input_file', required=True)
-        self.parser.add_argument('-o', '--output',
-                                 dest='output_file', required=True)
-        self.parser.add_argument('-x', '--width',
-                                 dest='width', required=False, default=1000)
-        self.parser.add_argument('-y', '--height',
-                                 dest='height', required=False, default=1000)
-        self.parser.add_argument('--inverted', dest="inverted",
-                                 required=False, action='store_true')
-        self.parser.add_argument('-c', '--contrast', dest='contrast',
-                                 required=False, default=100)
-
-    def parse(self):
-        args = self.parser.parse_args()
-        input_file = args.input_file
-        output_file = args.output_file
-
-        width = None
-        if args.width is not None:
-            width = int(args.width)
-
-        height = None
-        if args.height is not None:
-            height = int(args.height)
-        contrast = int(args.contrast)
-        inverted = args.inverted
-
-        return input_file, output_file, width, height, inverted, contrast
-
-
-def to_gray_scale(img):
-    img_arr = np.array(img)
-    gs_factors = np.array([0.2989, 0.587, 0.114])
-
-    width, height = img_arr.shape[0], img_arr.shape[1]
-    try:
-        img_arr.reshape(width * height, 3)
-        out = np.matmul(img_arr, gs_factors)
-    except ValueError:
-        return Image.fromarray(img_arr)
-
-    return Image.fromarray(out.reshape(width, height))
+chars = {
+    0: ' ', 1: '0', 2: '1', 3: '2', 4: '3', 5: '4', 6: '5',
+       7: '6', 8: '7', 9: '8', 10: '9', 11: 'a', 12: 'b',
+    13: 'c', 14: 'd', 15: 'e', 16: 'f', 17: 'g', 18: 'h',
+    19: 'i', 20: 'j', 21: 'k', 22: 'l', 23: 'm', 24: 'n',
+    25: 'o', 26: 'p', 27: 'q', 28: 'r', 29: 's', 30: 't',
+    31: 'u', 32: 'v', 33: 'w', 34: 'x', 35: 'y', 36: 'z',
+    37: 'A', 38: 'B', 39: 'C', 40: 'D', 41: 'E', 42: 'F',
+    43: 'G', 44: 'H', 45: 'I', 46: 'J', 47: 'K', 48: 'L',
+    49: 'M', 50: 'N', 51: 'O', 52: 'P', 53: 'Q', 54: 'R',
+    55: 'S', 56: 'T', 57: 'U', 58: 'V', 59: 'W', 60: 'X',
+    61: 'Y', 62: 'Z', 63: '!', 64: '"', 65: '#', 66: '$',
+    67: '%', 68: '&', 69: '(', 70: ')', 71: '*', 72: '+',
+    73: ',', 74: '-', 75: '.', 76: '/', 77: ':', 78: ';',
+    79: '?', 80: '@', 81: '\\', 82: '^', 83: '_', 84: '`',
+    85: '{', 86: '|', 87: '}', 88: '~', 89: '<', 90: '=', 91: '>'}
+block_width = 7
+block_height = 14
 
 
 class ImageConverter:
     def __init__(self, img_file, out_file,
-                 arg_width, arg_height, arg_inverted, arg_contrast):
+                 arg_width, arg_height, arg_invert, arg_contrast):
         self.img = Image.open(img_file)
         self.out_file = out_file
         self.width, self.height = self.img.size
         self.arg_width = arg_width
         self.arg_height = arg_height
-        self.inverted = arg_inverted
+        self.invert = arg_invert
         self.contrast = arg_contrast
 
     def resize(self, img, arg_width, arg_height):
@@ -120,6 +75,21 @@ class ImageConverter:
 
         return img.point(contrast)
 
+    @staticmethod
+    def to_gray_scale(img):
+        img_arr = np.array(img)
+        gs_factors = np.array([0.2989, 0.587, 0.114])
+
+        width, height = img_arr.shape[0], img_arr.shape[1]
+        try:
+            img_arr.reshape(width * height, 3)
+            out = np.matmul(img_arr, gs_factors)
+        except ValueError:
+            return img_arr
+
+        print(out.reshape(width, height))
+        return out.reshape(width, height)
+
     def to_ascii_chars(self, img):
         count_block_w, count_block_h = self.get_size_in_blocks(img)
         new_pixels = []
@@ -134,27 +104,24 @@ class ImageConverter:
 
         return ascii_img
 
-    @staticmethod
-    def get_most_suitable_char(img, x, y):
-        dict_creator = CharDictionary.CharDictionary()
-        dict_creator.get_char_dict()
-        char_dict = dict_creator.char_dict
+    def get_most_suitable_char(self, img, x, y):
+        char_dict = np.load("chars/chars.npy")
+
         min_diff = sys.maxsize
         most_suitable_char = " "
         next_x = x * block_width
         next_y = y * block_height
-        block = img.crop(
-            (next_x, next_y, next_x + block_width, next_y + block_height))
+        block = np.array(img.crop(
+            (next_x, next_y, next_x + block_width, next_y + block_height)))
 
-        for char in char_dict:
-            difference = ImageChops.difference(block, char_dict[char])
-            statistic = ImageStat.Stat(difference)
-            diff = statistic.sum[0]
-            if diff < min_diff:
-                min_diff = diff
-                most_suitable_char = char
-                if abs(diff) < 1e-9:
-                    return most_suitable_char
+        for i in range(92):
+            if self.invert:
+                difference = np.sum(abs((255-block) - char_dict[i, :]))
+            else:
+                difference = np.sum(abs(char_dict[i, :] - block))
+            if difference < min_diff:
+                min_diff = difference
+                most_suitable_char = chars[i]
         return most_suitable_char
 
     def convert(self):
@@ -162,42 +129,22 @@ class ImageConverter:
         contrast_img = self.change_contrast(resize_img, self.contrast)
         gs_img = contrast_img.convert('L')
 
-        if self.inverted:
+        if self.invert:
             gs_img = ImageChops.invert(gs_img)
-        gs_img.save("gs_img.jpg")
         out_ascii = self.to_ascii_chars(gs_img)
 
         with open(self.out_file, 'w') as file:
             file.write(out_ascii)
 
-
-class VerifierArguments:
-    def __init__(self, img_file, out_file):
-        self.img_file = img_file
-        self.out_file = out_file
-
-    @staticmethod
-    def verify_img(img):
-        try:
-            Image.open(img)
-            return True
-        except OSError:
-            print(f'{img} не является изображением')
-            return False
-
-    def verify(self):
-        self.verify_img(self.img_file)
+        return out_ascii
 
 
 def get_result_image():
-    parser = ParserArguments()
-    img_file, out_file, width, height, inverted, contrast = parser.parse()
-
-    verifier = VerifierArguments(img_file, out_file)
-    verifier.verify()
+    parser = parse.ParserArguments()
+    img_file, out_file, width, height, invert, contrast = parser.parse()
 
     converter = ImageConverter(img_file, out_file, width,
-                               height, inverted, contrast)
+                               height, invert, contrast)
     converter.convert()
 
 

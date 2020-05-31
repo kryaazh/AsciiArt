@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 from PIL import Image, ImageDraw, ImageChops, ImageStat
-from asciiart import ImageConverter, VerifierArguments
+import numpy as np
+from asciiart import ImageConverter
+import CharDictionary as chars
 import unittest
 
 
@@ -11,8 +13,8 @@ class TestConverter(unittest.TestCase):
                                    out_file='img_for_test/jer_r.jpg',
                                    arg_width=200,
                                    arg_height=100,
-                                   arg_background_color="white",
-                                   arg_contrast=100)
+                                   arg_contrast=100,
+                                   arg_invert=False)
         img = Image.open('img_for_test/resized_jer.jpg')
 
         resized_image = converter.resize(img, 100, 100)
@@ -21,22 +23,28 @@ class TestConverter(unittest.TestCase):
         self.assertEqual((100, 100), (new_width, new_height))
 
     def test_get_size_in_blocks(self):
-        img = Image.new('L', (26, 26))
+        img = Image.new('L', (14, 14))
 
         self.assertEqual(ImageConverter.get_size_in_blocks(img), (2, 1))
 
     def test_get_most_suitable_char(self):
+        converter = ImageConverter(img_file='img_for_test/jer.jpg',
+                                   out_file='img_for_test/jer_r.jpg',
+                                   arg_width=200,
+                                   arg_height=100,
+                                   arg_contrast=100,
+                                   arg_invert=False)
         img = Image.open("img_for_test/black.jpg")
 
-        self.assertEqual(ImageConverter.get_most_suitable_char(img, 1, 1), "W")
+        self.assertEqual(converter.get_most_suitable_char(img, 1, 1), "W")
 
     def test_to_ascii_char(self):
         converter = ImageConverter(img_file='img_for_test/black.jpg',
-                                   out_file='img_for_test/black.jpg',
+                                   out_file='img_for_test/black.txt',
                                    arg_width=13,
                                    arg_height=26,
-                                   arg_background_color="white",
-                                   arg_contrast=100)
+                                   arg_contrast=100,
+                                   arg_invert=False)
 
         ascii_img = Image.new('L', converter.img.size)
         draw = ImageDraw.Draw(ascii_img)
@@ -53,28 +61,79 @@ class TestConverter(unittest.TestCase):
 
         self.assertEqual(diff, 0)
 
+    def test_convert(self):
+        converter = ImageConverter(img_file='img_for_test/black.jpg',
+                                   out_file='img_for_test/black.txt',
+                                   arg_width=13,
+                                   arg_height=26,
+                                   arg_contrast=100,
+                                   arg_invert=False)
 
-class TestVerify(unittest.TestCase):
-    def test_true_verify(self):
-        verifier = VerifierArguments(img_file='img_for_test/jer.jpg',
-                                     out_file='img_for_test/jer_r.jpg')
-        if verifier.verify_img(verifier.img_file):
-            ver = True
-        else:
-            ver = False
+        img = converter.convert()
+        self.assertEqual(img, "W")
 
-        self.assertEqual(ver, True)
+    def test_to_gray_scale(self):
+        converter = ImageConverter(img_file='img_for_test/black.jpg',
+                                   out_file='img_for_test/black.txt',
+                                   arg_width=13,
+                                   arg_height=26,
+                                   arg_contrast=100,
+                                   arg_invert=False)
+        img = converter.to_gray_scale(converter.img)
 
-    def test_false_verify(self):
-        verifier = VerifierArguments(img_file='img_for_test/jer.txt',
-                                     out_file='img_for_test/jer_r.jpg')
+        img_arr = np.array([
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
-        if verifier.verify_img(verifier.img_file):
-            ver = True
-        else:
-            ver = False
+        self.assertEqual((img == img_arr).all(), True)
 
-        self.assertEqual(ver, False)
+
+class TestCharDictionary(unittest.TestCase):
+    def test_get_char_arr(self):
+        char_dict = chars.CharDictionary()
+        char = char_dict.get_char_arr(' ')
+
+        char_arr = np.array([[255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255],
+                             [255, 255, 255, 255, 255, 255, 255]])
+        equal_arr = (char == char_arr).all()
+
+        self.assertEqual(equal_arr, True)
 
 
 if __name__ == "__main__":

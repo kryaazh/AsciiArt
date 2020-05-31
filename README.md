@@ -9,14 +9,14 @@ ASCII Art
 	-o, --output : результат работы программы, в виде изображения
 
 Необязательные:
-	-x, --width  : ширина преобразованного изображения
-	-y, --height : высота преобразованного изображения
-	-b, --background: цвет фона ("black" или "white")
+	-W, --width  : ширина преобразованного изображения
+	-H, --height : высота преобразованного изображения
 	-c, --contrast: уровень контрастности (до 255)
+	--invert: инвертирование изображения
 
 Примеры ввода:
-	asciiart.py -i in.jpg -o out.jpg -x 1500 -y 1500 -b white -c 200
-	asciiart.py --input in.jpg --output out.jpg --width 1500 --height 1500 --background black --contrast 150
+	asciiart.py -i in.jpg -o out.jpg -x 1500 -y 1500 -c 200 --invert
+	asciiart.py --input in.jpg --output out.jpg --width 1500 --height 1500 --contrast 150
 
 Программа получается на вход изображение, результатом работы являются файл изображение с результатом и файл last_ascii.txt, в котором находится преобразованное изображение в текстовом формате.
 
@@ -36,16 +36,8 @@ ImageConverter:
 ParserArguments:
 	Преобразует полученные из консоли параметры в переменные 
 		input_file, output_file, width, height, background_color, contrast
-
-VerifierArguments:
-	Проверяет корректность введенного файла.
 	
-	
-Примеры преобразованных изображений:            
-
-![alt text](examples/jer_w.jpg) 
-
-![alt text](examples/jer_b.jpg)
+Примеры преобразованных изображений:
 
 
 

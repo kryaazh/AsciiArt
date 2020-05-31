@@ -7,11 +7,20 @@ import os
 from PIL import Image, ImageChops
 
 cam = cv2.VideoCapture(0)
-
-img_counter = 0
 converter = asciiart.ImageConverter('img_for_test/jer.jpg',
                                     'img_for_test/jer.txt',
                                     100, 100, True, 200)
+
+
+def convert(input_img):
+    img = Image.fromarray(input_img)
+    img = ImageChops.invert(img)
+    resize_img = converter.resize(img, 300, 300)
+    gs_img = resize_img.convert('L')
+    gs_img = ImageChops.invert(gs_img)
+
+    return converter.to_ascii_chars(gs_img)
+
 
 while True:
     ret, frame = cam.read()
@@ -19,13 +28,10 @@ while True:
         break
     k = cv2.waitKey(1)
 
-    img = Image.fromarray(frame)
-    img = ImageChops.invert(img)
-    resize_img = converter.resize(img, 200, 200)
-    gs_img = resize_img.convert('L')
-    ascii_img = converter.to_ascii_chars(gs_img)
+    ascii_img = convert(frame)
 
     os.system("cls")
     sys.stdout.write('\r' + ascii_img)
 
 cam.release()
+cv2.destroyAllWindows()
