@@ -15,9 +15,9 @@ converter = asciiart.ImageConverter('img_for_test/jer.jpg',
 def convert(input_img):
     img = Image.fromarray(input_img)
     img = ImageChops.invert(img)
-    resize_img = converter.resize(img, 300, 300)
+    resize_img = converter.resize(img, 280, 280)
     gs_img = resize_img.convert('L')
-    gs_img = ImageChops.invert(gs_img)
+    gs_img = converter.change_contrast(gs_img, 80)
 
     return converter.to_ascii_chars(gs_img)
 

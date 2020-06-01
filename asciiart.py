@@ -116,7 +116,7 @@ class ImageConverter:
 
         for i in range(92):
             if self.invert:
-                difference = np.sum(abs((255-block) - char_dict[i, :]))
+                difference = np.sum(abs((254 - char_dict[i, :]) - block))
             else:
                 difference = np.sum(abs(char_dict[i, :] - block))
             if difference < min_diff:
