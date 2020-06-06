@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import numpy as np
-from PIL import Image, ImageChops
+from PIL import ImageChops
 import ParserArguments as parse
 
 chars = {
@@ -27,9 +27,8 @@ block_height = 14
 class ImageConverter:
     def __init__(self, img_file, out_file,
                  arg_width, arg_height, arg_invert, arg_contrast):
-        self.img = Image.open(img_file)
+        self.img = img_file
         self.out_file = out_file
-        self.width, self.height = self.img.size
         self.arg_width = arg_width
         self.arg_height = arg_height
         self.invert = arg_invert
@@ -38,14 +37,15 @@ class ImageConverter:
     def resize(self, img, arg_width, arg_height):
         new_width = 0
         new_height = 0
-        ratio = self.height / self.width
+        width, height = self.img.size
+        ratio = height / width
 
         if arg_width is not None and arg_height is not None:
             new_width = arg_width
             new_height = arg_height
 
         elif arg_width is None and arg_height is None:
-            new_width = 1200
+            new_width = 120
             new_height = ratio * new_width
 
         elif arg_width is not None and arg_height is None:
@@ -60,6 +60,7 @@ class ImageConverter:
 
     @staticmethod
     def get_size_in_blocks(img):
+
         count_block_w = int(img.size[0] / block_width)
         count_block_h = int(img.size[1] / block_height)
 
@@ -124,7 +125,9 @@ class ImageConverter:
         return most_suitable_char
 
     def convert(self):
-        resize_img = self.resize(self.img, self.arg_width, self.arg_height)
+        resize_img = self.resize(self.img,
+                                 self.arg_width * block_width,
+                                 self.arg_height * block_height)
         contrast_img = self.change_contrast(resize_img, self.contrast)
         gs_img = contrast_img.convert('L')
 

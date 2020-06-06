@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+from PIL import Image
 
 
 class ParserArguments:
@@ -7,9 +8,9 @@ class ParserArguments:
         self.parser = argparse.ArgumentParser(add_help=True,
                                               description="Image to ASCII")
         self.parser.add_argument('-i', '--input',
-                                 dest='input_file', required=True)
+                                 dest='input_file', required=False)
         self.parser.add_argument('-o', '--output',
-                                 dest='output_file', required=True)
+                                 dest='output_file', required=False)
         self.parser.add_argument('-W', '--width',
                                  dest='width', required=False, default=1000)
         self.parser.add_argument('-H', '--height',
@@ -21,7 +22,11 @@ class ParserArguments:
 
     def parse(self):
         args = self.parser.parse_args()
-        input_file = args.input_file
+        try:
+            input_file = Image.open(args.input_file)
+        except AttributeError:
+            input_file = args.input_file
+
         output_file = args.output_file
 
         width = None

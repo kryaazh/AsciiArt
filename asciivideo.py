@@ -1,37 +1,42 @@
 #!/usr/bin/env python
 
 import cv2
+import shutil
 import asciiart
 import sys
-import os
 from PIL import Image, ImageChops
 
 cam = cv2.VideoCapture(0)
-converter = asciiart.ImageConverter('img_for_test/black.jpg',
-                                    'img_for_test/black.txt',
-                                    100, 100, True, 200)
 
 
 def convert(input_img):
-    img = Image.fromarray(input_img)
-    img = ImageChops.invert(img)
-    resize_img = converter.resize(img, 320, 280)
+    _img = ImageChops.invert(input_img)
+    resize_img = converter.resize(_img,
+                                  converter.arg_width * asciiart.block_width-1,
+                                  converter.arg_height * asciiart.block_height)
     gs_img = resize_img.convert('L')
-    gs_img = converter.change_contrast(gs_img, 80)
+    gs_img = converter.change_contrast(gs_img, converter.contrast)
 
     return converter.to_ascii_chars(gs_img)
 
 
-while True:
+def get_image_from_camera():
     ret, frame = cam.read()
-    if not ret:
-        break
-    k = cv2.waitKey(1)
+    if ret:
+        return frame
+    return None
 
-    ascii_img = convert(frame)
 
-    os.system("cls")
-    sys.stdout.write('\r' + ascii_img)
+while True:
+    image = get_image_from_camera()
+    (w, h) = shutil.get_terminal_size()
+    converter = asciiart.ImageConverter(Image.fromarray(image),
+                                        out_file="out.txt",
+                                        arg_width=w,
+                                        arg_height=h,
+                                        arg_invert=True,
+                                        arg_contrast=80)
+    sys.stdout.write("\r" + convert(converter.img))
 
 cam.release()
 cv2.destroyAllWindows()
