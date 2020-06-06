@@ -18,7 +18,7 @@ chars = np.array([
 class CharDictionary:
     def __init__(self):
         self.char_dict = {}
-        self.font = ImageFont.truetype("fonts\\RobotoMono-Regular.ttf", 11)
+        self.font = ImageFont.truetype("fonts/RobotoMono-Regular.ttf", 11)
         self.counter = 0
 
     def get_char_arr(self, char):

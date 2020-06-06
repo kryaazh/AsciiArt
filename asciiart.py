@@ -87,7 +87,6 @@ class ImageConverter:
         except ValueError:
             return img_arr
 
-        print(out.reshape(width, height))
         return out.reshape(width, height)
 
     def to_ascii_chars(self, img):

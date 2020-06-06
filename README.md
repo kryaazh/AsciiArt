@@ -1,5 +1,7 @@
 ASCII Art
 
+asciiart.py :
+
 Программа для преобразования изображения в ASCII Art
 
 Программа работает через консоль, имеет несколько входных параметров:
@@ -23,7 +25,7 @@ ASCII Art
 В файле asciiart.py содержатся модули: CharDictionary, ImageConverter, ParserArguments, VerifierArguments
 
 CharDictionary:
-	Составляет словарь, в котором каждому символу сопоставляется jpg изображение этого символа.
+	Создает файл chars.npy, в котором находятся все символы в байтовом виде.
 
 ImageConverter:
 	1. Получает на вход изображение
@@ -35,10 +37,14 @@ ImageConverter:
 
 ParserArguments:
 	Преобразует полученные из консоли параметры в переменные 
-		input_file, output_file, width, height, background_color, contrast
+		input_file, output_file, width, height, invert, contrast
 	
-Примеры преобразованных изображений:
+Примеры преобразованных изображений находятся в папке examples
 
+
+asciivideo.py :
+
+Данный модуль преобразует в ASCIIArt видео с веб-камеры и выводит его в консоль.
 
 
 
