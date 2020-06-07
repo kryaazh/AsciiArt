@@ -25,19 +25,17 @@ block_height = 14
 
 
 class ImageConverter:
-    def __init__(self, img_file, out_file,
-                 arg_width, arg_height, arg_invert, arg_contrast):
-        self.img = img_file
-        self.out_file = out_file
+    def __init__(self, arg_width, arg_height, arg_invert, arg_contrast):
         self.arg_width = arg_width
         self.arg_height = arg_height
         self.invert = arg_invert
         self.contrast = arg_contrast
 
-    def resize(self, img, arg_width, arg_height):
+    @staticmethod
+    def resize(img, arg_width, arg_height):
         new_width = 0
         new_height = 0
-        width, height = self.img.size
+        width, height = img.size
         ratio = height / width
 
         if arg_width is not None and arg_height is not None:
@@ -124,8 +122,8 @@ class ImageConverter:
                 most_suitable_char = chars[i]
         return most_suitable_char
 
-    def convert(self):
-        resize_img = self.resize(self.img,
+    def convert(self, img, out):
+        resize_img = self.resize(img,
                                  self.arg_width * block_width,
                                  self.arg_height * block_height)
         contrast_img = self.change_contrast(resize_img, self.contrast)
@@ -135,7 +133,7 @@ class ImageConverter:
             gs_img = ImageChops.invert(gs_img)
         out_ascii = self.to_ascii_chars(gs_img)
 
-        with open(self.out_file, 'w') as file:
+        with open(out, 'w') as file:
             file.write(out_ascii)
 
         return out_ascii
@@ -144,10 +142,8 @@ class ImageConverter:
 def get_result_image():
     parser = parse.ParserArguments()
     img_file, out_file, width, height, invert, contrast = parser.parse()
-
-    converter = ImageConverter(img_file, out_file, width,
-                               height, invert, contrast)
-    converter.convert()
+    converter = ImageConverter(width, height, invert, contrast)
+    converter.convert(img_file, out_file)
 
 
 def main():

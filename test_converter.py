@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-
-from PIL import Image, ImageDraw, ImageChops, ImageStat
+from PIL import Image
 import numpy as np
 from asciiart import ImageConverter
 import CharDictionary as chars
@@ -9,77 +8,60 @@ import unittest
 
 class TestConverter(unittest.TestCase):
     def test_resize(self):
-        converter = ImageConverter(
-            img_file=Image.open('img_for_test/black.jpg'),
-            out_file='img_for_test/black.txt',
-            arg_width=1,
-            arg_height=1,
-            arg_contrast=100,
-            arg_invert=False)
-        resized_image = converter.resize(converter.img, 100, 100)
+        converter = ImageConverter(arg_width=1, arg_height=1,
+                                   arg_contrast=100, arg_invert=False)
+        img = Image.open('img_for_test/black.jpg')
+        resized_image = converter.resize(img, 100, 100)
         new_width, new_height = resized_image.size
-        converter.img.close()
+        img.close()
         self.assertEqual((100, 100), (new_width, new_height))
 
     def test_get_size_in_blocks(self):
-        converter = ImageConverter(
-            img_file=Image.open('img_for_test/black.jpg'),
-            out_file='img_for_test/black.txt',
-            arg_width=1,
-            arg_height=1,
-            arg_contrast=100,
-            arg_invert=False)
-        converter.img.close()
-        img = Image.new('L', (14, 14))
+        converter = ImageConverter(arg_width=1, arg_height=1,
+                                   arg_contrast=100, arg_invert=False)
 
+        img = Image.new('L', (14, 14))
         self.assertEqual(converter.get_size_in_blocks(img), (2, 1))
 
     def test_get_most_suitable_char(self):
-        converter = ImageConverter(
-            img_file=Image.open('img_for_test/black.jpg'),
-            out_file='img_for_test/black.txt',
-            arg_width=1,
-            arg_height=1,
-            arg_contrast=100,
-            arg_invert=False)
-        char = converter.get_most_suitable_char(converter.img, 1, 1)
-        converter.img.close()
+        converter = ImageConverter(arg_width=1, arg_height=1,
+                                   arg_contrast=100, arg_invert=False)
+
+        img = Image.open('img_for_test/black.jpg')
+        char = converter.get_most_suitable_char(img, 1, 1)
+        img.close()
         self.assertEqual(char, "W")
 
     def test_to_ascii_char(self):
-        converter = ImageConverter(
-            img_file=Image.open('img_for_test/black.jpg'),
-            out_file='img_for_test/black.txt',
-            arg_width=1,
-            arg_height=1,
-            arg_contrast=100,
-            arg_invert=False)
-        ascii_img = converter.to_ascii_chars(converter.img)
-        converter.img.close()
+        converter = ImageConverter(arg_width=1, arg_height=1,
+                                   arg_contrast=100, arg_invert=False)
+
+        img = Image.open('img_for_test/black.jpg')
+        r_img = converter.resize(img,
+                                 converter.arg_width * 7,
+                                 converter.arg_height * 14)
+        ascii_img = converter.to_ascii_chars(r_img)
+        img.close()
         self.assertEqual(ascii_img, "W")
 
     def test_convert(self):
-        converter = ImageConverter(
-            img_file=Image.open('img_for_test/black.jpg'),
-            out_file='img_for_test/black.txt',
-            arg_width=1,
-            arg_height=1,
-            arg_contrast=100,
-            arg_invert=False)
-        img = converter.convert()
-        converter.img.close()
-        self.assertEqual(img, "W")
+        converter = ImageConverter(arg_width=1, arg_height=1,
+                                   arg_contrast=100, arg_invert=False)
+
+        img = Image.open('img_for_test/black.jpg')
+        a_img = converter.convert(img, 'img_for_test/black.txt')
+        img.close()
+        self.assertEqual(a_img, "W")
 
     def test_to_gray_scale(self):
-        converter = ImageConverter(
-            img_file=Image.open('img_for_test/black.jpg'),
-            out_file='img_for_test/black.txt',
-            arg_width=1,
-            arg_height=1,
-            arg_contrast=100,
-            arg_invert=False)
+        converter = ImageConverter(arg_width=1, arg_height=1,
+                                   arg_contrast=100, arg_invert=False)
 
-        img = converter.to_gray_scale(converter.img)
+        image = Image.open('img_for_test/black.jpg')
+        r_img = converter.resize(image,
+                                 converter.arg_width,
+                                 converter.arg_height)
+        img = converter.to_gray_scale(r_img)
 
         img_arr = np.array([
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -109,7 +91,7 @@ class TestConverter(unittest.TestCase):
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
-        converter.img.close()
+        image.close()
         self.assertEqual((img == img_arr).all(), True)
 
 

@@ -8,16 +8,24 @@ class ParserArguments:
         self.parser = argparse.ArgumentParser(add_help=True,
                                               description="Image to ASCII")
         self.parser.add_argument('-i', '--input',
-                                 dest='input_file', required=False)
+                                 dest='input_file',
+                                 required=False)
         self.parser.add_argument('-o', '--output',
-                                 dest='output_file', required=False)
+                                 dest='output_file',
+                                 required=False)
         self.parser.add_argument('-W', '--width',
-                                 dest='width', required=False, default=1000)
+                                 dest='width',
+                                 required=False,
+                                 default=100)
         self.parser.add_argument('-H', '--height',
-                                 dest='height', required=False, default=1000)
+                                 dest='height',
+                                 required=False,
+                                 default=100)
         self.parser.add_argument('--invert', dest="invert",
-                                 required=False, action='store_true')
-        self.parser.add_argument('-c', '--contrast', dest='contrast',
+                                 required=False,
+                                 action='store_true')
+        self.parser.add_argument('-c', '--contrast',
+                                 dest='contrast',
                                  required=False, default=0)
 
     def parse(self):
