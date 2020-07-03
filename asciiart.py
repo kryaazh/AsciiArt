@@ -2,11 +2,11 @@
 import sys
 import numpy as np
 from PIL import ImageChops
-import ParserArguments as parse
+import ParserArguments as parser
 
-chars = {
-    0: ' ', 1: '0', 2: '1', 3: '2', 4: '3', 5: '4', 6: '5',
-       7: '6', 8: '7', 9: '8', 10: '9', 11: 'a', 12: 'b',
+CHARS = {
+    0:  ' ', 1:  '0', 2:  '1', 3:  '2', 4:  '3', 5:  '4', 6: '5',
+    7:  '6', 8:  '7', 9:  '8', 10: '9', 11: 'a', 12: 'b',
     13: 'c', 14: 'd', 15: 'e', 16: 'f', 17: 'g', 18: 'h',
     19: 'i', 20: 'j', 21: 'k', 22: 'l', 23: 'm', 24: 'n',
     25: 'o', 26: 'p', 27: 'q', 28: 'r', 29: 's', 30: 't',
@@ -20,49 +20,42 @@ chars = {
     73: ',', 74: '-', 75: '.', 76: '/', 77: ':', 78: ';',
     79: '?', 80: '@', 81: '\\', 82: '^', 83: '_', 84: '`',
     85: '{', 86: '|', 87: '}', 88: '~', 89: '<', 90: '=', 91: '>'}
-block_width = 7
-block_height = 14
+BLOCK_WIDTH = 7
+BLOCK_HEIGHT = 14
 
 
 class ImageConverter:
-    def __init__(self, arg_width, arg_height, arg_invert, arg_contrast):
-        self.arg_width = arg_width
-        self.arg_height = arg_height
-        self.invert = arg_invert
-        self.contrast = arg_contrast
+    def __init__(self, width, height, invert, contrast):
+        self.width = width
+        self.height = height
+        self.invert = invert
+        self.contrast = contrast
 
     @staticmethod
-    def resize(img, arg_width, arg_height):
-        new_width = 0
-        new_height = 0
-        width, height = img.size
-        ratio = height / width
+    def resize(img, width, height):
+        _new_width = 0
+        _new_height = 0
+        _width, _height = img.size
+        ratio = _height / _width
 
-        if arg_width is not None and arg_height is not None:
-            new_width = arg_width
-            new_height = arg_height
+        if width and height:
+            _new_width = width
+            _new_height = height
+        elif not width and not height:
+            _new_width = 120
+            _new_height = ratio * _new_width
+        elif width and not height:
+            _new_width = width
+            _new_height = ratio * _new_width
+        elif height and not width:
+            _new_height = height
+            _new_width = height / ratio
 
-        elif arg_width is None and arg_height is None:
-            new_width = 120
-            new_height = ratio * new_width
-
-        elif arg_width is not None and arg_height is None:
-            new_width = arg_width
-            new_height = ratio * new_width
-
-        elif arg_height is not None and arg_width is None:
-            new_height = arg_height
-            new_width = arg_height / ratio
-
-        return img.resize((int(new_width), int(new_height)))
+        return img.resize((int(_new_width), int(_new_height)))
 
     @staticmethod
     def get_size_in_blocks(img):
-
-        count_block_w = int(img.size[0] / block_width)
-        count_block_h = int(img.size[1] / block_height)
-
-        return count_block_w, count_block_h
+        return int(img.size[0] / BLOCK_WIDTH), int(img.size[1] / BLOCK_HEIGHT)
 
     @staticmethod
     def change_contrast(img, level):
@@ -71,21 +64,18 @@ class ImageConverter:
         def contrast(c):
             value = 128 + factor * (c - 128)
             return max(0, min(255, value))
-
         return img.point(contrast)
 
     @staticmethod
     def to_gray_scale(img):
         img_arr = np.array(img)
         gs_factors = np.array([0.2989, 0.587, 0.114])
-
         width, height = img_arr.shape[0], img_arr.shape[1]
         try:
             img_arr.reshape(width * height, 3)
             out = np.matmul(img_arr, gs_factors)
         except ValueError:
             return img_arr
-
         return out.reshape(width, height)
 
     def to_ascii_chars(self, img):
@@ -107,10 +97,10 @@ class ImageConverter:
 
         min_diff = sys.maxsize
         most_suitable_char = " "
-        next_x = x * block_width
-        next_y = y * block_height
+        next_x = x * BLOCK_WIDTH
+        next_y = y * BLOCK_HEIGHT
         block = np.array(img.crop(
-            (next_x, next_y, next_x + block_width, next_y + block_height)))
+            (next_x, next_y, next_x + BLOCK_WIDTH, next_y + BLOCK_HEIGHT)))
 
         for i in range(92):
             if self.invert:
@@ -119,29 +109,27 @@ class ImageConverter:
                 difference = np.sum(abs(char_dict[i, :] - block))
             if difference < min_diff:
                 min_diff = difference
-                most_suitable_char = chars[i]
+                most_suitable_char = CHARS[i]
         return most_suitable_char
 
     def convert(self, img, out):
         resize_img = self.resize(img,
-                                 self.arg_width * block_width,
-                                 self.arg_height * block_height)
+                                 self.width * BLOCK_WIDTH,
+                                 self.height * BLOCK_HEIGHT)
         contrast_img = self.change_contrast(resize_img, self.contrast)
         gs_img = contrast_img.convert('L')
-
         if self.invert:
             gs_img = ImageChops.invert(gs_img)
         out_ascii = self.to_ascii_chars(gs_img)
 
         with open(out, 'w') as file:
             file.write(out_ascii)
-
         return out_ascii
 
 
 def get_result_image():
-    parser = parse.ParserArguments()
-    img_file, out_file, width, height, invert, contrast = parser.parse()
+    _parser = parser.ParserArguments()
+    img_file, out_file, width, height, invert, contrast = _parser.parse()
     converter = ImageConverter(width, height, invert, contrast)
     converter.convert(img_file, out_file)
 

@@ -6,22 +6,18 @@ import sys
 from PIL import Image, ImageChops
 
 cam = cv2.VideoCapture(0)
-(width, height) = shutil.get_terminal_size()
-converter = asciiart.ImageConverter(arg_width=width,
-                                    arg_height=height,
-                                    arg_invert=True,
-                                    arg_contrast=80)
+(WIDTH, HEIGHT) = shutil.get_terminal_size()
+converter = asciiart.ImageConverter(width=WIDTH, height=HEIGHT,
+                                    invert=True, contrast=80)
 
 
 def convert(input_img, w, h):
     _img = ImageChops.invert(input_img)
-    resize_img = converter.resize(_img,
-                                  w * asciiart.block_width-1,
-                                  h * asciiart.block_height)
+    resize_img = converter.resize(_img, w * asciiart.BLOCK_WIDTH - 1,
+                                  h * asciiart.BLOCK_HEIGHT)
     gs_img = resize_img.convert('L')
-    gs_img = converter.change_contrast(gs_img, converter.contrast)
-
-    return converter.to_ascii_chars(gs_img)
+    contrast_img = converter.change_contrast(gs_img, converter.contrast)
+    return converter.to_ascii_chars(contrast_img)
 
 
 def get_image_from_camera():
@@ -35,7 +31,6 @@ def run_ascii_web_camera():
     while True:
         image = get_image_from_camera()
         (_width, _height) = shutil.get_terminal_size()
-
         sys.stdout.write(convert(image, _width, _height))
 
 
