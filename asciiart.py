@@ -20,6 +20,7 @@ CHARS = {
     73: ',', 74: '-', 75: '.', 76: '/', 77: ':', 78: ';',
     79: '?', 80: '@', 81: '\\', 82: '^', 83: '_', 84: '`',
     85: '{', 86: '|', 87: '}', 88: '~', 89: '<', 90: '=', 91: '>'}
+CHAR_DICT = np.load("chars/chars.npy")
 BLOCK_WIDTH = 7
 BLOCK_HEIGHT = 14
 
@@ -93,8 +94,6 @@ class ImageConverter:
         return ascii_img
 
     def get_most_suitable_char(self, img, x, y):
-        char_dict = np.load("chars/chars.npy")
-
         min_diff = sys.maxsize
         most_suitable_char = " "
         next_x = x * BLOCK_WIDTH
@@ -104,9 +103,9 @@ class ImageConverter:
 
         for i in range(92):
             if self.invert:
-                difference = np.sum(abs((254 - char_dict[i, :]) - block))
+                difference = np.sum(abs((254 - CHAR_DICT[i, :]) - block))
             else:
-                difference = np.sum(abs(char_dict[i, :] - block))
+                difference = np.sum(abs(CHAR_DICT[i, :] - block))
             if difference < min_diff:
                 min_diff = difference
                 most_suitable_char = CHARS[i]

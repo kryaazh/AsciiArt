@@ -92,7 +92,7 @@ class TestConverter(unittest.TestCase):
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
         image.close()
-        self.assertEqual((img == img_arr).all(), True)
+        self.assertTrue((img == img_arr).all())
 
 
 class TestCharDictionary(unittest.TestCase):
@@ -116,7 +116,7 @@ class TestCharDictionary(unittest.TestCase):
                              [255, 255, 255, 255, 255, 255, 255]])
         equal_arr = (char == char_arr).all()
 
-        self.assertEqual(equal_arr, True)
+        self.assertTrue(equal_arr)
 
 
 if __name__ == "__main__":
