@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+import cv2
 import sys
+import os
 import numpy as np
-from PIL import ImageChops
+from PIL import ImageChops, Image
 import ParserArguments as parser
 
 CHARS = {
@@ -111,7 +113,7 @@ class ImageConverter:
                 most_suitable_char = CHARS[i]
         return most_suitable_char
 
-    def convert(self, img, out):
+    def convert(self, img):
         resize_img = self.resize(img,
                                  self.width * BLOCK_WIDTH,
                                  self.height * BLOCK_HEIGHT)
@@ -121,8 +123,6 @@ class ImageConverter:
             gs_img = ImageChops.invert(gs_img)
         out_ascii = self.to_ascii_chars(gs_img)
 
-        with open(out, 'w') as file:
-            file.write(out_ascii)
         return out_ascii
 
 
@@ -130,7 +130,13 @@ def get_result_image():
     _parser = parser.ParserArguments()
     img_file, out_file, width, height, invert, contrast = _parser.parse()
     converter = ImageConverter(width, height, invert, contrast)
-    converter.convert(img_file, out_file)
+    ascii_image = converter.convert(Image.open(img_file))
+
+    if out_file is None:
+        sys.stdout.write(ascii_image)
+    else:
+        with open(out_file, 'w') as file:
+            file.write(ascii_image)
 
 
 def main():

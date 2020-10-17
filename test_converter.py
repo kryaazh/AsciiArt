@@ -49,7 +49,7 @@ class TestConverter(unittest.TestCase):
                                    contrast=100, invert=False)
 
         img = Image.open('img_for_test/black.jpg')
-        a_img = converter.convert(img, 'img_for_test/black.txt')
+        a_img = converter.convert(img)
         img.close()
         self.assertEqual(a_img, "W")
 
@@ -62,61 +62,26 @@ class TestConverter(unittest.TestCase):
                                  converter.width,
                                  converter.height)
         img = converter.to_gray_scale(r_img)
-
-        img_arr = np.array([
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+        img_arr = np.zeros((13, 26), dtype=np.int8)
 
         image.close()
         self.assertTrue((img == img_arr).all())
+
+    def test_convert_diff_color(self):
+        converter = ImageConverter(width=2, height=2,
+                                   contrast=0, invert=False)
+        image = Image.open('img_for_test/bwg.jpg')
+        a_img = converter.convert(image)
+        image.close()
+        self.assertEqual(a_img, "Wj\n. ")
 
 
 class TestCharDictionary(unittest.TestCase):
     def test_get_char_arr(self):
         char_dict = chars.CharDictionary()
         char = char_dict.get_char_arr(' ')
-
-        char_arr = np.array([[255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255],
-                             [255, 255, 255, 255, 255, 255, 255]])
-        equal_arr = (char == char_arr).all()
-
-        self.assertTrue(equal_arr)
+        char_arr = 255 * np.ones((14, 7), dtype=np.int8)
+        self.assertTrue((char == char_arr).all())
 
 
 if __name__ == "__main__":

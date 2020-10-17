@@ -7,8 +7,7 @@ class ParserArguments:
     def __init__(self):
         self.parser = argparse.ArgumentParser(add_help=True,
                                               description="Image to ASCII")
-        self.parser.add_argument('-i', '--input', dest='input',
-                                 required=False)
+        self.parser.add_argument('-i', '--input', dest='input')
         self.parser.add_argument('-o', '--output', dest='output',
                                  required=False)
         self.parser.add_argument('-W', '--width', dest='width',
@@ -22,11 +21,12 @@ class ParserArguments:
 
     def parse(self):
         args = self.parser.parse_args()
-        try:
-            input_file = Image.open(args.input)
-        except AttributeError:
-            input_file = args.input
-        output_file = args.output
+
+        input_file = args.input
+
+        output_file = None
+        if args.output is not None:
+            output_file = args.output
 
         width = None
         if args.width is not None:
