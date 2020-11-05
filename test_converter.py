@@ -11,8 +11,8 @@ class TestConverter(unittest.TestCase):
         converter = ImageConverter(width=1, height=1,
                                    contrast=100, invert=False)
         img = Image.open('img_for_test/black.jpg')
-        resized_image = converter.resize(img, 100, 100)
-        new_width, new_height = resized_image.size
+        resized_image = converter.resize(np.array(img), 100, 100)
+        new_width, new_height = resized_image.shape[0], resized_image.shape[1]
         img.close()
         self.assertEqual((100, 100), (new_width, new_height))
 
@@ -21,14 +21,14 @@ class TestConverter(unittest.TestCase):
                                    contrast=100, invert=False)
 
         img = Image.new('L', (14, 14))
-        self.assertEqual(converter.get_size_in_blocks(img), (2, 1))
+        self.assertEqual(converter.get_size_in_blocks(np.array(img)), (2, 1))
 
     def test_get_most_suitable_char(self):
         converter = ImageConverter(width=1, height=1,
                                    contrast=100, invert=False)
 
         img = Image.open('img_for_test/black.jpg')
-        char = converter.get_most_suitable_char(img, 1, 1)
+        char = converter.get_most_suitable_char(np.array(img), 1, 1)
         img.close()
         self.assertEqual(char, "W")
 
@@ -37,7 +37,7 @@ class TestConverter(unittest.TestCase):
                                    contrast=100, invert=False)
 
         img = Image.open('img_for_test/black.jpg')
-        r_img = converter.resize(img,
+        r_img = converter.resize(np.array(img),
                                  converter.width * 7,
                                  converter.height * 14)
         ascii_img = converter.to_ascii_chars(r_img)
@@ -58,7 +58,7 @@ class TestConverter(unittest.TestCase):
                                    contrast=100, invert=False)
 
         image = Image.open('img_for_test/black.jpg')
-        r_img = converter.resize(image,
+        r_img = converter.resize(np.array(image),
                                  converter.width,
                                  converter.height)
         img = converter.to_gray_scale(r_img)
@@ -74,6 +74,31 @@ class TestConverter(unittest.TestCase):
         a_img = converter.convert(image)
         image.close()
         self.assertEqual(a_img, "Wj\n. ")
+
+    def test_convert_more_diff_color(self):
+        converter = ImageConverter(width=4, height=4,
+                                   contrast=0, invert=False)
+        image = Image.open('img_for_test/bwg.jpg')
+        a_img = converter.convert(image)
+        image.close()
+        self.assertEqual(a_img, "WWjj\nWWjj\n..  \n..  ")
+
+    def test_lines(self):
+        converter = ImageConverter(width=2, height=2,
+                                   contrast=0, invert=False)
+        image = Image.open('img_for_test/lines.jpg')
+        a_img = converter.convert(image)
+        image.close()
+        self.assertEqual(a_img, "Lr\n|j")
+
+    def test_invert(self):
+        converter = ImageConverter(width=1, height=1,
+                                   contrast=0, invert=True)
+
+        image = Image.open('img_for_test/E.jpg')
+        a_img = converter.convert(image)
+        image.close()
+        self.assertEqual(a_img, "}")
 
 
 class TestCharDictionary(unittest.TestCase):

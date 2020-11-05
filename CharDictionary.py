@@ -18,10 +18,8 @@ class CharDictionary:
         return np.array(char_img)
 
     def get_char_dict(self):
-        chars_arr = []
-        for char in CHARS.values():
-            chars_arr.append(self.get_char_arr(char))
-        np.save("chars/chars.npy", chars_arr)
+        np.save("chars/chars.npy", [self.get_char_arr(char)
+                                    for char in CHARS.values()])
 
 
 if __name__ == '__main__':

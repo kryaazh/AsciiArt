@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 import sys
+import cv2
 import numpy as np
-from PIL import ImageChops, Image
+from PIL import Image
 import argparse
+
+CHARS = dict(enumerate(' 0123456789'
+                       'abcdefghijklmnopqrstuvwxyz'
+                       'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                       '!"#$%&()*+,-./:;?@\\^_`{|}~<=>'))
 
 
 class ImageConverter:
-    CHARS = dict(enumerate(' 0123456789'
-                           'abcdefghijklmnopqrstuvwxyz'
-                           'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                           '!"#$%&()*+,-./:;?@\\^_`{|}~<=>'))
     CHAR_DICT = np.load("chars/chars.npy")
     BLOCK_WIDTH = 7
     BLOCK_HEIGHT = 14
@@ -24,7 +26,7 @@ class ImageConverter:
     def resize(img, width, height):
         _new_width = 0
         _new_height = 0
-        _width, _height = img.size
+        _width, _height = img.shape[1], img.shape[0]
         ratio = _height / _width
 
         if width and height:
@@ -40,27 +42,25 @@ class ImageConverter:
             _new_height = height
             _new_width = height / ratio
 
-        return img.resize((int(_new_width), int(_new_height)))
+        return cv2.resize(np.array(img), (int(_new_width), int(_new_height)))
 
     def get_size_in_blocks(self, img):
-        return int(img.size[0] / self.BLOCK_WIDTH), \
-               int(img.size[1] / self.BLOCK_HEIGHT)
+        return int(img.shape[1] / self.BLOCK_WIDTH),\
+               int(img.shape[0] / self.BLOCK_HEIGHT)
 
     @staticmethod
     def change_contrast(img, level):
-        factor = (259 * (level + 255)) / (255 * (259 - level))
+        f = 131 * (level + 127) / (127 * (131 - level))
+        alpha_c = f
+        gamma_c = 127 * (1 - f)
 
-        def contrast(c):
-            value = 128 + factor * (c - 128)
-            return max(0, min(255, value))
-
-        return img.point(contrast)
+        buf = cv2.addWeighted(img, alpha_c, img, 0, gamma_c)
+        return buf
 
     @staticmethod
-    def to_gray_scale(img):
-        img_arr = np.array(img)
+    def to_gray_scale(img_arr):
         gs_factors = np.array([0.2989, 0.587, 0.114])
-        width, height = img_arr.shape[0], img_arr.shape[1]
+        width, height = img_arr.shape[1], img_arr.shape[0]
         try:
             img_arr.reshape(width * height, 3)
             out = np.matmul(img_arr, gs_factors)
@@ -87,32 +87,30 @@ class ImageConverter:
         most_suitable_char = " "
         next_x = x * self.BLOCK_WIDTH
         next_y = y * self.BLOCK_HEIGHT
-        block = np.array(img.crop(
-            (next_x, next_y,
-             next_x + self.BLOCK_WIDTH,
-             next_y + self.BLOCK_HEIGHT)))
 
-        for i in range(len(self.CHARS)):
+        block = img[next_y:(next_y + self.BLOCK_HEIGHT),
+                    next_x:(next_x + self.BLOCK_WIDTH)]
+
+        for i in range(len(CHARS)):
             if self.invert:
                 difference = np.sum(abs((254 - self.CHAR_DICT[i, :]) - block))
             else:
                 difference = np.sum(abs(self.CHAR_DICT[i, :] - block))
             if difference < min_diff:
                 min_diff = difference
-                most_suitable_char = self.CHARS[i]
+                most_suitable_char = CHARS[i]
         return most_suitable_char
 
     def convert(self, img):
-        resize_img = self.resize(img,
+        gs_img = img.convert("L")
+        resize_img = self.resize(np.array(gs_img),
                                  self.width * self.BLOCK_WIDTH,
                                  self.height * self.BLOCK_HEIGHT)
         contrast_img = self.change_contrast(resize_img, self.contrast)
-        gs_img = contrast_img.convert('L')
         if self.invert:
-            gs_img = ImageChops.invert(gs_img)
-        out_ascii = self.to_ascii_chars(gs_img)
+            contrast_img = cv2.bitwise_not(contrast_img)
 
-        return out_ascii
+        return self.to_ascii_chars(contrast_img)
 
 
 def parse():
@@ -133,7 +131,7 @@ def parse():
     parser.add_argument('-c', '--contrast', dest='contrast', required=False,
                         default=0, type=int,
                         help="Changes the contrast of the image, "
-                             "allowed values [-255; 255]")
+                             "allowed values [-127; 127]")
 
     args = parser.parse_args()
 

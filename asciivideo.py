@@ -4,22 +4,26 @@ import shutil
 import asciiart
 import argparse
 import sys
-from PIL import Image, ImageChops
 
 
 def convert(input_img, w, h):
-    _img = ImageChops.invert(input_img)
-    resize_img = converter.resize(_img, w * converter.BLOCK_WIDTH - 1,
+    img = cv2.bitwise_not(input_img)
+
+    resize_img = converter.resize(img, w * converter.BLOCK_WIDTH - 1,
                                   h * converter.BLOCK_HEIGHT)
-    gs_img = resize_img.convert('L')
-    contrast_img = converter.change_contrast(gs_img, converter.contrast)
-    return converter.to_ascii_chars(contrast_img)
+    contrast_img = converter.change_contrast(resize_img, converter.contrast)
+    gs_img = cv2.cvtColor(contrast_img, cv2.COLOR_BGR2GRAY)
+
+    if converter.invert:
+        gs_img = cv2.bitwise_not(gs_img)
+
+    return converter.to_ascii_chars(gs_img)
 
 
 def get_image_from_camera():
     ret, frame = cam.read()
     if ret:
-        return Image.fromarray(frame)
+        return frame
     return None
 
 
@@ -39,7 +43,7 @@ def parse():
     parser.add_argument('-c', '--contrast', dest='contrast',
                         required=False, default=0, type=int,
                         help="Changes the contrast of the image, "
-                             "allowed values [-255; 255]")
+                             "allowed values [-127; 127]")
     parser.add_argument('-С', '--camera-id', dest="camera_id",
                         default=0, type=int,
                         help="The id of the webcam from which"
