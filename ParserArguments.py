@@ -9,34 +9,30 @@ class ParserArguments:
                                               description="Image to ASCII")
         self.parser.add_argument('-i', '--input', dest='input')
         self.parser.add_argument('-o', '--output', dest='output',
-                                 required=False)
+                                 required=False,
+                                 help="The picture file to be converted")
         self.parser.add_argument('-W', '--width', dest='width',
-                                 required=False, default=100)
+                                 required=False, default=100, type=int,
+                                 help="The width of output in ascii chars")
         self.parser.add_argument('-H', '--height', dest='height',
-                                 required=False, default=100)
+                                 required=False, default=100, type=int,
+                                 help="The height of output in ascii chars")
         self.parser.add_argument('--invert', dest="invert",
-                                 required=False, action='store_true')
+                                 required=False, action='store_true',
+                                 help="Convert an inverted image")
         self.parser.add_argument('-c', '--contrast', dest='contrast',
-                                 required=False, default=0)
+                                 required=False, default=0, type=int,
+                                 help="Changes the contrast of the image, "
+                                      "allowed values [-255; 255]")
 
     def parse(self):
         args = self.parser.parse_args()
 
         input_file = args.input
-
-        output_file = None
-        if args.output is not None:
-            output_file = args.output
-
-        width = None
-        if args.width is not None:
-            width = int(args.width)
-
-        height = None
-        if args.height is not None:
-            height = int(args.height)
-
-        contrast = int(args.contrast)
+        output_file = args.output
+        width = args.width
+        height = args.height
+        contrast = args.contrast
         invert = args.invert
 
         return input_file, output_file, width, height, invert, contrast
