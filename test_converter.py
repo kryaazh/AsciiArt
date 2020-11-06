@@ -62,7 +62,7 @@ class TestConverter(unittest.TestCase):
                                  converter.width,
                                  converter.height)
         img = converter.to_gray_scale(r_img)
-        img_arr = np.zeros((13, 26), dtype=np.int8)
+        img_arr = np.zeros((14, 28), dtype=np.int8)
 
         image.close()
         self.assertTrue((img == img_arr).all())
@@ -99,6 +99,24 @@ class TestConverter(unittest.TestCase):
         a_img = converter.convert(image)
         image.close()
         self.assertEqual(a_img, "}")
+
+    def test_negative_contrast(self):
+        converter = ImageConverter(width=2, height=2,
+                                   contrast=-50, invert=False)
+
+        image = Image.open('img_for_test/bwg.jpg')
+        a_img = converter.convert(image)
+        image.close()
+        self.assertEqual(a_img, "@m\n:.")
+
+    def test_positive_contrast(self):
+        converter = ImageConverter(width=2, height=2,
+                                   contrast=50, invert=False)
+
+        image = Image.open('img_for_test/bwg.jpg')
+        a_img = converter.convert(image)
+        image.close()
+        self.assertEqual(a_img, "WJ\n  ")
 
 
 class TestCharDictionary(unittest.TestCase):

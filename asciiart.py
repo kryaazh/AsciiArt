@@ -24,16 +24,15 @@ class ImageConverter:
 
     @staticmethod
     def resize(img, width, height):
-        _new_width = 0
-        _new_height = 0
+        _new_width, _new_height = 0, 0
         _width, _height = img.shape[1], img.shape[0]
         ratio = _height / _width
 
         if width and height:
             _new_width = width
             _new_height = height
-        elif not width and not height:
-            _new_width = 120
+        elif width == 0 and height == 0:
+            _new_width = 800
             _new_height = ratio * _new_width
         elif width and not height:
             _new_width = width
@@ -54,8 +53,7 @@ class ImageConverter:
         alpha_c = f
         gamma_c = 127 * (1 - f)
 
-        buf = cv2.addWeighted(img, alpha_c, img, 0, gamma_c)
-        return buf
+        return cv2.addWeighted(img, alpha_c, img, 0, gamma_c)
 
     @staticmethod
     def to_gray_scale(img_arr):
@@ -116,14 +114,16 @@ class ImageConverter:
 def parse():
     parser = argparse.ArgumentParser(add_help=True,
                                      description="Image to ASCII")
-    parser.add_argument('-i', '--input', dest='input')
-    parser.add_argument('-o', '--output', dest='output', required=False,
+    parser.add_argument('-i', '--input', dest='input',
                         help="The picture file to be converted")
+    parser.add_argument('-o', '--output', dest='output', required=False,
+                        help="The text file to which "
+                             "the ascii will be written")
     parser.add_argument('-W', '--width', dest='width', required=False,
-                        default=100, type=int,
+                        default=0, type=int,
                         help="The width of output in ascii chars")
     parser.add_argument('-H', '--height', dest='height', required=False,
-                        default=100, type=int,
+                        default=0, type=int,
                         help="The height of output in ascii chars")
     parser.add_argument('--invert', dest="invert", required=False,
                         action='store_true',
@@ -132,28 +132,19 @@ def parse():
                         default=0, type=int,
                         help="Changes the contrast of the image, "
                              "allowed values [-127; 127]")
-
-    args = parser.parse_args()
-
-    input_file = args.input
-    output_file = args.output
-    width = args.width
-    height = args.height
-    contrast = args.contrast
-    invert = args.invert
-
-    return input_file, output_file, width, height, invert, contrast
+    return parser.parse_args()
 
 
 def get_result_image():
-    img_file, out_file, width, height, invert, contrast = parse()
-    converter = ImageConverter(width, height, invert, contrast)
-    ascii_image = converter.convert(Image.open(img_file))
+    args = parse()
+    converter = ImageConverter(args.width, args.height,
+                               args.invert, args.contrast)
+    ascii_image = converter.convert(Image.open(args.input))
 
-    if not out_file:
+    if not args.output:
         sys.stdout.write(ascii_image)
     else:
-        with open(out_file, 'w') as file:
+        with open(args.output, 'w') as file:
             file.write(ascii_image)
 
 
