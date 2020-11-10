@@ -9,7 +9,8 @@ import unittest
 class TestConverter(unittest.TestCase):
     def test_resize(self):
         converter = ImageConverter(width=1, height=1,
-                                   contrast=100, invert=False)
+                                   contrast=100, invert=False,
+                                   chars="chars/chars.npy")
         img = Image.open('img_for_test/black.jpg')
         resized_image = converter.resize(np.array(img), 100, 100)
         new_width, new_height = resized_image.shape[0], resized_image.shape[1]
@@ -18,14 +19,16 @@ class TestConverter(unittest.TestCase):
 
     def test_get_size_in_blocks(self):
         converter = ImageConverter(width=1, height=1,
-                                   contrast=100, invert=False)
+                                   contrast=100, invert=False,
+                                   chars="chars/chars.npy")
 
         img = Image.new('L', (14, 14))
         self.assertEqual(converter.get_size_in_blocks(np.array(img)), (2, 1))
 
     def test_get_most_suitable_char(self):
         converter = ImageConverter(width=1, height=1,
-                                   contrast=100, invert=False)
+                                   contrast=100, invert=False,
+                                   chars="chars/chars.npy")
 
         img = Image.open('img_for_test/black.jpg')
         char = converter.get_most_suitable_char(np.array(img), 1, 1)
@@ -34,7 +37,8 @@ class TestConverter(unittest.TestCase):
 
     def test_to_ascii_char(self):
         converter = ImageConverter(width=1, height=1,
-                                   contrast=100, invert=False)
+                                   contrast=100, invert=False,
+                                   chars="chars/chars.npy")
 
         img = Image.open('img_for_test/black.jpg')
         r_img = converter.resize(np.array(img),
@@ -46,7 +50,8 @@ class TestConverter(unittest.TestCase):
 
     def test_convert(self):
         converter = ImageConverter(width=1, height=1,
-                                   contrast=100, invert=False)
+                                   contrast=100, invert=False,
+                                   chars="chars/chars.npy")
 
         img = Image.open('img_for_test/black.jpg')
         a_img = converter.convert(img)
@@ -55,7 +60,8 @@ class TestConverter(unittest.TestCase):
 
     def test_to_gray_scale(self):
         converter = ImageConverter(width=1, height=1,
-                                   contrast=100, invert=False)
+                                   contrast=100, invert=False,
+                                   chars="chars/chars.npy")
 
         image = Image.open('img_for_test/black.jpg')
         r_img = converter.resize(np.array(image),
@@ -69,7 +75,8 @@ class TestConverter(unittest.TestCase):
 
     def test_convert_diff_color(self):
         converter = ImageConverter(width=2, height=2,
-                                   contrast=0, invert=False)
+                                   contrast=0, invert=False,
+                                   chars="chars/chars.npy")
         image = Image.open('img_for_test/bwg.jpg')
         a_img = converter.convert(image)
         image.close()
@@ -77,7 +84,8 @@ class TestConverter(unittest.TestCase):
 
     def test_convert_more_diff_color(self):
         converter = ImageConverter(width=4, height=4,
-                                   contrast=0, invert=False)
+                                   contrast=0, invert=False,
+                                   chars="chars/chars.npy")
         image = Image.open('img_for_test/bwg.jpg')
         a_img = converter.convert(image)
         image.close()
@@ -85,7 +93,8 @@ class TestConverter(unittest.TestCase):
 
     def test_lines(self):
         converter = ImageConverter(width=2, height=2,
-                                   contrast=0, invert=False)
+                                   contrast=0, invert=False,
+                                   chars="chars/chars.npy")
         image = Image.open('img_for_test/lines.jpg')
         a_img = converter.convert(image)
         image.close()
@@ -93,7 +102,8 @@ class TestConverter(unittest.TestCase):
 
     def test_invert(self):
         converter = ImageConverter(width=1, height=1,
-                                   contrast=0, invert=True)
+                                   contrast=0, invert=True,
+                                   chars="chars/chars.npy")
 
         image = Image.open('img_for_test/E.jpg')
         a_img = converter.convert(image)
@@ -102,7 +112,8 @@ class TestConverter(unittest.TestCase):
 
     def test_negative_contrast(self):
         converter = ImageConverter(width=2, height=2,
-                                   contrast=-50, invert=False)
+                                   contrast=-50, invert=False,
+                                   chars="chars/chars.npy")
 
         image = Image.open('img_for_test/bwg.jpg')
         a_img = converter.convert(image)
@@ -111,7 +122,8 @@ class TestConverter(unittest.TestCase):
 
     def test_positive_contrast(self):
         converter = ImageConverter(width=2, height=2,
-                                   contrast=50, invert=False)
+                                   contrast=50, invert=False,
+                                   chars="chars/chars.npy")
 
         image = Image.open('img_for_test/bwg.jpg')
         a_img = converter.convert(image)
@@ -121,7 +133,8 @@ class TestConverter(unittest.TestCase):
 
 class TestCharDictionary(unittest.TestCase):
     def test_get_char_arr(self):
-        char_dict = chars.CharDictionary()
+        char_dict = chars.CharDictionary(font='font/RobotoMono-Regular.ttf',
+                                         chars='chars/chars.npy')
         char = char_dict.get_char_arr(' ')
         char_arr = 255 * np.ones((14, 7), dtype=np.int8)
         self.assertTrue((char == char_arr).all())

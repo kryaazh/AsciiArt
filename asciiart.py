@@ -12,11 +12,10 @@ CHARS = dict(enumerate(' 0123456789'
 
 
 class ImageConverter:
-    CHAR_DICT = np.load("chars/chars.npy")
-    BLOCK_WIDTH = 7
-    BLOCK_HEIGHT = 14
+    BLOCK_WIDTH, BLOCK_HEIGHT = 7, 14
 
-    def __init__(self, width, height, invert, contrast):
+    def __init__(self, width, height, invert, contrast, chars):
+        self.char_dict = np.load(chars)
         self.width = width
         self.height = height
         self.invert = invert
@@ -49,6 +48,8 @@ class ImageConverter:
 
     @staticmethod
     def change_contrast(img, level):
+        if level > 127 or level < -127:
+            raise ValueError("Contrast must be in [-127; 127]")
         f = 131 * (level + 127) / (127 * (131 - level))
         alpha_c = f
         gamma_c = 127 * (1 - f)
@@ -91,9 +92,9 @@ class ImageConverter:
 
         for i in range(len(CHARS)):
             if self.invert:
-                difference = np.sum(abs((254 - self.CHAR_DICT[i, :]) - block))
+                difference = np.sum(abs((254 - self.char_dict[i, :]) - block))
             else:
-                difference = np.sum(abs(self.CHAR_DICT[i, :] - block))
+                difference = np.sum(abs(self.char_dict[i, :] - block))
             if difference < min_diff:
                 min_diff = difference
                 most_suitable_char = CHARS[i]
@@ -132,13 +133,18 @@ def parse():
                         default=0, type=int,
                         help="Changes the contrast of the image, "
                              "allowed values [-127; 127]")
+    parser.add_argument('-s', '--chars_file', dest='chars',
+                        default="chars/chars.npy",
+                        help="File .npy in which to save the dictionary",
+                        required=False)
     return parser.parse_args()
 
 
-def get_result_image():
+def main():
     args = parse()
     converter = ImageConverter(args.width, args.height,
-                               args.invert, args.contrast)
+                               args.invert, args.contrast,
+                               args.chars)
     ascii_image = converter.convert(Image.open(args.input))
 
     if not args.output:
@@ -146,10 +152,6 @@ def get_result_image():
     else:
         with open(args.output, 'w') as file:
             file.write(ascii_image)
-
-
-def main():
-    get_result_image()
 
 
 if __name__ == '__main__':

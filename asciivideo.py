@@ -60,7 +60,8 @@ if __name__ == "__main__":
     converter = asciiart.ImageConverter(width=WIDTH,
                                         height=HEIGHT,
                                         invert=args.invert,
-                                        contrast=args.contrast)
+                                        contrast=args.contrast,
+                                        chars="chars/chars.npy")
     run_ascii_web_camera()
     cam.release()
     cv2.destroyAllWindows()
