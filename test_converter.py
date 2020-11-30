@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from PIL import Image
 import numpy as np
-from asciiart import ImageConverter
-import CharDictionary as chars
+from ascii_art import ImageConverter
+import char_dictionary as chars
 import unittest
 
 
